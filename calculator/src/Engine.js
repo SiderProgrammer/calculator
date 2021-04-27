@@ -25,6 +25,13 @@ export default class Engine {
 
     return this.number;
   }
+  removeZero(number) {
+    if (number.length > 1 && number[0] === "0" && number[1] !== ".") {
+      return this.removeZero(number.substr(1, number.length));
+    }
+
+    return number;
+  }
   handleOperationInput(input) {
     if (input === "+" || input === "-" || input === "*" || input === "/") {
       return this.handleBasicMathOperation(input);
@@ -53,7 +60,60 @@ export default class Engine {
     return this.number;
   }
 
-  handleEqualOperation(input) {}
+  handleEqualOperation(input) {
+    if (this.previousNumber == null) {
+      this.updatePreviousState(this.number, input);
+
+      return this.number;
+    } else {
+      this.previousInput = input;
+
+      if (this.previousOperation !== "=" && input === "=") {
+        const temp = this.number;
+
+        if (this.previousOperation === this.OperationEnum.addition) {
+          this.perform(this.add);
+        }
+        if (this.previousOperation === this.OperationEnum.subtraction) {
+          this.perform(this.subtract);
+        }
+        if (this.previousOperation === this.OperationEnum.multiplication) {
+          this.perform(this.muliply);
+        }
+        if (this.previousOperation === this.OperationEnum.division) {
+          this.perform(this.divide);
+        }
+
+        this.repeatNumber = temp;
+        this.repeatOperation = this.previousOperation;
+        this.previousInput = input;
+        this.previousOperation = input;
+
+        return this.number;
+      } else {
+        let temp = this.number;
+
+        if (this.repeatNumber != null) {
+          if (this.repeatOperation === this.OperationEnum.addition) {
+            this.number = this.add(this.number, this.repeatNumber);
+          }
+          if (this.repeatOperation === this.OperationEnum.subtraction) {
+            this.number = this.subtract(this.number, this.repeatNumber);
+          }
+          if (this.repeatOperation === this.OperationEnum.multiplication) {
+            this.number = this.muliply(this.number, this.repeatNumber);
+          }
+          if (this.repeatOperation === this.OperationEnum.division) {
+            this.number = this.divide(this.number, this.repeatNumber);
+          }
+        }
+
+        this.updatePreviousStatus(temp, input);
+
+        return this.number;
+      }
+    }
+  }
   updatePreviousState(number, input) {
     this.previousNumber = number;
     this.previousInput = input;
@@ -65,7 +125,7 @@ export default class Engine {
 
       return this.number;
     } else {
-      let temp = this.previousInput;
+      const temp = this.previousInput;
       this.previousInput = input;
       if (temp !== input && this.previousOperation !== "=" && temp !== "=") {
         if (input === "+") {
@@ -108,6 +168,6 @@ export default class Engine {
   }
 
   isDigit(value) {
-    return Number(value) || value === "0" || value === ".";
+    return Boolean(Number(value) || value === "0" || value === ".");
   }
 }
