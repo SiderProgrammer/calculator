@@ -1,0 +1,12 @@
+.display {
+  height: 20%;
+  color: white;
+  font-size: 9vmin;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.display > span {
+  margin-right: 20px;
+}
