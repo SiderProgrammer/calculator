@@ -1,9 +1,5 @@
 # react calculator
 
-# App hosted with Firebase
-
-=====> https://live-chat-4e642.web.app/ <=====
-
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
