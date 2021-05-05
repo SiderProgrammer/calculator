@@ -1,19 +1,42 @@
-export default class Engine {
+class Engine {
   constructor() {
-    this.number = "";
+    this.number = "0";
+
+    this.previousInput = null;
+    this.previousNumber = null;
+    this.previousOperation = null;
+    this.repeatNumber = null;
+    this.repeatOperation = null;
+    this.clearable = false;
+
+    this.OperationEnum = {
+      addition: "+",
+      subtraction: "-",
+      multiplication: "*",
+      division: "/",
+      percentage: "%",
+      equal: "=",
+      clear: "C",
+    };
   }
 
-  calculate(input) {
-    if (this.isDigit(input)) return this.handleDigitInput(input);
-
-    return this.handleOperationInput(input);
+  updatePreviousStatus(number, input) {
+    this.previousNumber = number;
+    this.previousInput = input;
+    this.previousOperation = input;
   }
 
+  // Handle and process all digit inputs including .
   handleDigitInput(input) {
-    if (!this.isDigit(this.previousInput)) this.number = "";
+    this.clearable = true;
 
-    if (input === "." && this.containDecimalPoint(this.number))
+    if (this.isOperation(this.previousInput)) {
+      this.number = "";
+    }
+
+    if (input === "." && this.containDecimalPoint(this.number)) {
       return this.number;
+    }
 
     if (input === "." && this.number === "") {
       this.number = "0.";
@@ -21,35 +44,86 @@ export default class Engine {
     }
 
     this.number += input;
+
     this.previousInput = input;
 
-    return this.number;
+    return this.removeZero(this.number);
   }
-  removeZero(number) {
-    if (number.length > 1 && number[0] === "0" && number[1] !== ".") {
-      return this.removeZero(number.substr(1, number.length));
+
+  // Handle all operation other than digit inputs.
+  handleOperationInput(input) {
+    if (
+      input === this.OperationEnum.addition ||
+      input === this.OperationEnum.subtraction ||
+      input === this.OperationEnum.multiplication ||
+      input === this.OperationEnum.division
+    ) {
+      return this.handleBaiscMathOperation(input);
     }
 
-    return number;
-  }
-  handleOperationInput(input) {
-    if (input === "+" || input === "-" || input === "*" || input === "/") {
-      return this.handleBasicMathOperation(input);
-    } else if (input === "=") {
-      return this.handleEqualOperation(input);
-    } else if (input === "%") {
-      return this.handlePercentageOperation(input);
-    } else if (input === "C") {
+    if (input === this.OperationEnum.percentage) {
+      return this.handlePercentageOperation();
+    }
+
+    if (input === this.OperationEnum.sign) {
+      return this.handleSignOperation();
+    }
+
+    if (input === this.OperationEnum.allClear) {
+      return this.handleAllClearOperation();
+    }
+
+    if (input === this.OperationEnum.clear) {
       return this.handleClearOperation();
     }
+
+    if (input === this.OperationEnum.equal) {
+      return this.handleEqualOperation(input);
+    }
   }
-  handleClearOperation() {
-    this.number = "";
-    this.previousInput = null;
-    this.previousNumber = null;
-    this.previousOperation = null;
-    return "0";
+
+  // Only handle basic +, -, /, x operations
+  handleBaiscMathOperation(input) {
+    this.repeatNumber = null;
+    this.repeatOperation = null;
+
+    if (this.previousNumber == null) {
+      this.updatePreviousStatus(this.number, input);
+
+      return this.number;
+    } else {
+      let temp = this.previousInput;
+      this.previousInput = input;
+
+      if (
+        temp !== input &&
+        this.previousOperation !== this.OperationEnum.equal &&
+        temp !== "="
+      ) {
+        if (this.previousOperation === this.OperationEnum.addition) {
+          this.number = this.add(this.previousNumber, this.number);
+        }
+        if (this.previousOperation === this.OperationEnum.subtraction) {
+          this.number = this.subtract(this.previousNumber, this.number);
+        }
+        if (this.previousOperation === this.OperationEnum.multiplication) {
+          this.number = this.muliply(this.previousNumber, this.number);
+        }
+        if (this.previousOperation === this.OperationEnum.division) {
+          this.number = this.divide(this.previousNumber, this.number);
+        }
+
+        this.updatePreviousStatus(this.number, input);
+
+        return this.number;
+      } else {
+        this.updatePreviousStatus(this.number, input);
+
+        return this.number;
+      }
+    }
   }
+
   handlePercentageOperation() {
     if (this.number === "") {
       this.number = "0";
@@ -60,16 +134,43 @@ export default class Engine {
     return this.number;
   }
 
+  handleSignOperation() {
+    if (this.number === "") {
+      this.number = "0";
+    }
+
+    this.number = this.changeSign(this.number);
+
+    return this.number;
+  }
+
+  handleClearOperation() {
+    return this.allClear();
+  }
+
+  // Paramter operation is one of add, subtract, multiply or divide
+  perform(operation) {
+    if (this.repeatNumber !== null) {
+      this.number = operation(this.number, this.repeatNumber);
+    } else {
+      this.repeatNumber = this.number;
+      this.number = operation(this.previousNumber, this.number);
+    }
+  }
+
   handleEqualOperation(input) {
     if (this.previousNumber == null) {
-      this.updatePreviousState(this.number, input);
+      this.updatePreviousStatus(this.number, input);
 
       return this.number;
     } else {
       this.previousInput = input;
 
-      if (this.previousOperation !== "=" && input === "=") {
-        const temp = this.number;
+      if (
+        this.previousOperation !== this.OperationEnum.equal &&
+        input === this.OperationEnum.equal
+      ) {
+        let temp = this.number;
 
         if (this.previousOperation === this.OperationEnum.addition) {
           this.perform(this.add);
@@ -114,41 +215,32 @@ export default class Engine {
       }
     }
   }
-  updatePreviousState(number, input) {
-    this.previousNumber = number;
-    this.previousInput = input;
-    this.previousOperation = input;
-  }
-  handleBasicMathOperation(input) {
-    if (!this.previousNumber) {
-      this.updatePreviousState(this.number, input);
 
-      return this.number;
-    } else {
-      const temp = this.previousInput;
-      this.previousInput = input;
-      if (temp !== input && this.previousOperation !== "=" && temp !== "=") {
-        if (input === "+") {
-          this.number = this.add(this.previousNumber, this.number);
-        } else if (input === "-") {
-          this.number = this.subtract(this.previousNumber, this.number);
-        } else if (input === "*") {
-          this.number = this.muliply(this.previousNumber, this.number);
-        } else if (input === "/") {
-          this.number = this.divide(this.previousNumber, this.number);
-        }
-        this.updatePreviousState(this.number, input);
-        return this.number;
-      } else {
-        this.updatePreviousState(this.number, input);
-
-        return this.number;
-      }
+  calculate(input) {
+    if (input === "(" || input === ")") return this.number; // TODO * handle brackets operation
+    if (this.isDigit(input)) {
+      return this.handleDigitInput(input);
     }
+
+    if (this.isOperation(input)) {
+      return this.handleOperationInput(input);
+    }
+
+    return "Error";
   }
+
+  isDigit(input) {
+    return !isNaN(input) || input === ".";
+  }
+
+  isOperation(input) {
+    return Object.values(this.OperationEnum).includes(input);
+  }
+
   add(previousNumber, number) {
     return (parseFloat(previousNumber) + parseFloat(number)).toString();
   }
+
   subtract(previousNumber, number) {
     return (parseFloat(previousNumber) - parseFloat(number)).toString();
   }
@@ -160,14 +252,40 @@ export default class Engine {
   divide(previousNumber, number) {
     return (parseFloat(previousNumber) / parseFloat(number)).toString();
   }
+
   percentage(number) {
     return (parseFloat(number) / 100).toString();
   }
+
+  changeSign(number) {
+    return parseFloat(number) === 0
+      ? "0"
+      : (parseFloat(number) * -1).toString();
+  }
+
+  allClear() {
+    this.number = "";
+    this.previousInput = null;
+    this.previousNumber = null;
+    this.previousOperation = null;
+    this.repeatNumber = null;
+    this.repeatOperation = null;
+    this.clearable = false;
+
+    return "0";
+  }
+
+  removeZero(number) {
+    if (number.length > 1 && number[0] === "0" && number[1] !== ".") {
+      return this.removeZero(number.substr(1, number.length));
+    }
+
+    return number;
+  }
+
   containDecimalPoint(number) {
     return number.includes(".");
   }
-
-  isDigit(value) {
-    return Boolean(Number(value) || value === "0" || value === ".");
-  }
 }
+
+export default Engine;

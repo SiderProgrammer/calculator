@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 function Buttons({ onClick }) {
   // prettier-ignore
-  const characters = [
+  const characters = [ // could be placed in constants file
     "(",")","%","C",
     7,8,9,"/",
     4,5,6,"*",

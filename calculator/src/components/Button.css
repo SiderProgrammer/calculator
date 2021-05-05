@@ -5,3 +5,7 @@
   background-color: #434343;
   color: white;
 }
+
+.button-disabled {
+  background-color: red;
+}
