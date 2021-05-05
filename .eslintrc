@@ -1,0 +1,16 @@
+{
+    "parser": "babel-eslint",
+    "extends": ["airbnb-base", "prettier"],
+    "plugins": ["import"],
+    "env": {
+      "browser": true,
+      "es6": true
+    },
+    "globals": {},
+    "rules": {
+      "import/no-cycle": "warn",
+    },
+    "parserOptions": {
+      "sourceType": "module"
+    }
+  }
